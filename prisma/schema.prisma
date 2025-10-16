@@ -1,0 +1,78 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Modelo para os usuários verificados
+model User {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  username     String    @unique
+  passwordHash String
+  coins        Int       @default(0)
+  isAdmin      Boolean   @default(false)
+  isBanned     Boolean   @default(false)
+  banReason    String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  characters   Character[]
+  tickets      Ticket[]
+}
+
+// Modelo para os personagens que um usuário possui
+model Character {
+  id              String   @id @default(cuid())
+  name            String
+  ability         String
+  rarityName      String
+  rarityColor     String
+  buffDescription String
+  owner           User     @relation(fields: [ownerId], references: [id])
+  ownerId         String
+}
+
+// Modelo para os tickets de suporte
+model Ticket {
+  id        Int      @id @default(autoincrement())
+  subject   String
+  message   String
+  status    String   @default("open")
+  createdAt DateTime @default(now())
+  author    User     @relation(fields: [authorId], references: [id])
+  authorId  String
+}
+
+// Modelo para usuários pendentes de verificação
+model PendingUser {
+  id               String   @id @default(cuid())
+  email            String   @unique
+  username         String
+  passwordHash     String
+  verificationCode String
+  createdAt        DateTime @default(now())
+}
+
+// Modelo para tokens de redefinição de senha
+model PasswordReset {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  email     String
+  expires   DateTime
+  createdAt DateTime @default(now())
+}
+
+// Modelo para o log de ações do administrador
+model AdminLog {
+  id        Int      @id @default(autoincrement())
+  action    String // Ex: "BAN_USER", "GIVE_COINS"
+  details   String // Ex: "Baniu o usuário test@example.com por spam."
+  adminName String
+  createdAt DateTime @default(now())
+}
